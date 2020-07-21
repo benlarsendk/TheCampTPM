@@ -6,27 +6,27 @@
 
 
     addObjectAttributes.val = 0;
-    addObjectAttributes.val |= TPMA_OBJECT_NODA;
-    addObjectAttributes.val |= TPMA_OBJECT_FIXEDTPM;
-    addObjectAttributes.val |= TPMA_OBJECT_FIXEDPARENT;
+    addObjectAttributes.val |= TPMA_OBJECT_NODA;            // No dictonary attack protection
+    addObjectAttributes.val |= TPMA_OBJECT_FIXEDTPM;        // It's FIXED TO THE TPM (Important)
+    addObjectAttributes.val |= TPMA_OBJECT_FIXEDPARENT;     // Fixed parent
     deleteObjectAttributes.val = 0;
 
 
     publicArea->objectAttributes = addObjectAttributes;
-    publicArea->type = TPM_ALG_ECC;        /* RSA or ECC */
-    publicArea->nameAlg = TPM_ALG_SHA256;
-    publicArea->objectAttributes.val |= TPMA_OBJECT_SENSITIVEDATAORIGIN;
-    publicArea->objectAttributes.val |= TPMA_OBJECT_USERWITHAUTH;
-    publicArea->objectAttributes.val &= ~TPMA_OBJECT_ADMINWITHPOLICY;
-    publicArea->objectAttributes.val &= ~TPMA_OBJECT_SIGN;
-    publicArea->objectAttributes.val |= TPMA_OBJECT_DECRYPT;
-    publicArea->objectAttributes.val |= TPMA_OBJECT_RESTRICTED;
-    publicArea->objectAttributes.val &= ~deleteObjectAttributes.val;
-    publicArea->parameters.eccDetail.symmetric.algorithm = TPM_ALG_AES;
-    publicArea->parameters.eccDetail.symmetric.keyBits.aes = 128;
-    publicArea->parameters.eccDetail.symmetric.mode.aes = TPM_ALG_CFB;
-    publicArea->parameters.eccDetail.scheme.scheme = TPM_ALG_NULL;
-    publicArea->parameters.eccDetail.scheme.details.anySig.hashAlg = 0;
+    publicArea->type = TPM_ALG_ECC;                                         //  We use ECC
+    publicArea->nameAlg = TPM_ALG_SHA256;                                   // We ALWAYS use SHA256 for hashing
+    publicArea->objectAttributes.val |= TPMA_OBJECT_SENSITIVEDATAORIGIN;    // We want to keep the sensitive data encrypted
+    publicArea->objectAttributes.val |= TPMA_OBJECT_USERWITHAUTH;           // A user may use this (with potential auth)
+    publicArea->objectAttributes.val &= ~TPMA_OBJECT_ADMINWITHPOLICY;       // Not for admin use with policies
+    publicArea->objectAttributes.val &= ~TPMA_OBJECT_SIGN;                  // Not a signing key
+    publicArea->objectAttributes.val |= TPMA_OBJECT_DECRYPT;                // It may decrypt
+    publicArea->objectAttributes.val |= TPMA_OBJECT_RESTRICTED;             // It's restricted (can only sign TPM values)
+    publicArea->objectAttributes.val &= ~deleteObjectAttributes.val;        
+    publicArea->parameters.eccDetail.symmetric.algorithm = TPM_ALG_AES;     // The algorithm for encrypting (the child) 
+    publicArea->parameters.eccDetail.symmetric.keyBits.aes = 128;           // 128 bits for that
+    publicArea->parameters.eccDetail.symmetric.mode.aes = TPM_ALG_CFB;      // AES Mode
+    publicArea->parameters.eccDetail.scheme.scheme = TPM_ALG_NULL;          // Rest is just ECC parameters
+    publicArea->parameters.eccDetail.scheme.details.anySig.hashAlg = 0;     
     publicArea->parameters.eccDetail.curveID = TPM_ECC_NIST_P256;
     publicArea->parameters.eccDetail.kdf.scheme = TPM_ALG_NULL;
     publicArea->parameters.eccDetail.kdf.details.mgf1.hashAlg = 0;
@@ -34,8 +34,6 @@
     publicArea->unique.ecc.y.t.size = 0;
     publicArea->unique.rsa.t.size = 0;
 
-    if (policyDigest == nullptr)
-        publicArea->authPolicy.t.size = 0;
-    else {
-        publicArea->authPolicy = *policyDigest;
-    }
+    // No policy!
+    publicArea->authPolicy.t.size = 0;
+ 
